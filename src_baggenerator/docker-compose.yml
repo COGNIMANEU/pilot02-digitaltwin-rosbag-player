@@ -1,0 +1,29 @@
+services:
+  rosbag_generator:
+    build: .
+    container_name: rosbag_generator
+    networks:
+      - ros_network
+    command: ["python3", "/usr/src/app/src/rosbag_generator.py"]
+
+  rosbag_db3_recorder:
+    image: ros:humble
+    container_name: rosbag_db3_recorder
+    command: >
+      bash -c "source /opt/ros/humble/setup.bash && 
+              ros2 bag record /topic_1 /topic_2 -o /tmp/bag_output &
+              sleep 10 &&  
+              cp -r /tmp/bag_output /usr/src/app/bag_output && 
+              echo 'Bag files copied to host volume' && 
+              echo 'Stopping rosbag recorder' &&
+              ros2 bag info /tmp/bag_output/bag_output_0.db3"  # Execute ros2 bag info on the rosbag
+    volumes:
+      - ./:/usr/src/app/bag_output
+    networks:
+      - ros_network
+    depends_on:
+      - rosbag_generator
+
+networks:
+  ros_network:
+    driver: bridge

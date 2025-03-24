@@ -1,0 +1,34 @@
+services:
+  rosbag_player:
+    build: .
+    container_name: rosbag_player
+    volumes:
+      - ./config:/usr/src/app/config
+    environment:
+    - BAG_FILE_PATH=/usr/src/app/config/sample_bag.db3
+    networks:
+      - ros_network
+
+  test_subscriber_1:
+    image: ros:humble-ros-base
+    command: >
+      bash -c "source /opt/ros/humble/setup.bash &&
+              timeout 20 ros2 topic echo /topic_1 || echo 'Subscriber 1 stopped after 20s' && exit 0"
+    depends_on:
+      - rosbag_player
+    networks:
+      - ros_network
+
+  test_subscriber_2:
+    image: ros:humble-ros-base
+    command: >
+      bash -c "source /opt/ros/humble/setup.bash &&
+              timeout 20 ros2 topic echo /topic_2 || echo 'Subscriber 2 stopped after 20s' && exit 0"
+    depends_on:
+      - rosbag_player
+    networks:
+      - ros_network
+
+networks:
+  ros_network:
+    driver: bridge                
